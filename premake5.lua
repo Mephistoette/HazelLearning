@@ -16,6 +16,9 @@ project "Hazel"		--Hazel项目
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}") -- 输出目录
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")-- 中间目录
 
+	pchheader "hzpch.h"
+	pchsource "Hazel/src/hzpch.cpp"
+
 	-- 包含的所有h和cpp文件
 	files{
 		"%{prj.name}/src/**.h",
@@ -23,7 +26,8 @@ project "Hazel"		--Hazel项目
 	}
 	-- 包含目录
 	includedirs{
-		"%{prj.name}/vendor/spdlog/include"
+		"%{prj.name}/vendor/spdlog/include",
+		"%{prj.name}/src"
 	}
 	-- 如果是window系统
 	filter "system:windows"
