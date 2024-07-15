@@ -1,51 +1,67 @@
-workspace "Hazel"		-- sln文件名
-	architecture "x64"	
-	configurations{
+workspace "Hazel"
+	architecture "x64"
+
+	configurations
+	{
 		"Debug",
 		"Release",
 		"Dist"
 	}
--- https://github.com/premake/premake-core/wiki/Tokens#value-tokens
--- 组成输出目录:Debug-windows-x86_64
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-project "Hazel"		--Hazel项目
-	location "Hazel"--在sln所属文件夹下的Hazel文件夹
-	kind "SharedLib"--dll动态库
+-- Include directories relative to root folder (solution directory)
+IncludeDir = {}
+IncludeDir["GLFW"] = "Hazel/vendor/GLFW/include"
+
+include "Hazel/vendor/GLFW"
+
+project "Hazel"
+	location "Hazel"
+	kind "SharedLib"
 	language "C++"
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}") -- 输出目录
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")-- 中间目录
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	pchheader "hzpch.h"
 	pchsource "Hazel/src/hzpch.cpp"
 
-	-- 包含的所有h和cpp文件
-	files{
+	files
+	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
 	}
-	-- 包含目录
-	includedirs{
+
+	includedirs
+	{
+		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include",
-		"%{prj.name}/src"
+		"%{IncludeDir.GLFW}"
 	}
-	-- 如果是window系统
+
+	links 
+	{ 
+		"GLFW",
+		"opengl32.lib"
+	}
+
 	filter "system:windows"
 		cppdialect "C++17"
-		-- On:代码生成的运行库选项是MTD,静态链接MSVCRT.lib库;
-		-- Off:代码生成的运行库选项是MDD,动态链接MSVCRT.dll库;打包后的exe放到另一台电脑上若无这个dll会报错
-		staticruntime "On"	
-		systemversion "latest"	-- windowSDK版本
-		-- 预处理器定义
-		defines{
+		staticruntime "On"
+		systemversion "latest"
+
+		defines
+		{
 			"HZ_PLATFORM_WINDOWS",
 			"HZ_BUILD_DLL"
 		}
-		-- 编译好后移动Hazel.dll文件到Sandbox文件夹下
-        postbuildcommands {
-            ("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
-        }
-	-- 不同配置下的预定义不同
+
+		postbuildcommands
+		{
+			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox")
+		}
+
 	filter "configurations:Debug"
 		defines "HZ_DEBUG"
 		symbols "On"
@@ -66,17 +82,20 @@ project "Sandbox"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
-	files{
+	files
+	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
 	}
-	-- 同样包含spdlog头文件
-	includedirs{
+
+	includedirs
+	{
 		"Hazel/vendor/spdlog/include",
 		"Hazel/src"
 	}
-	-- 引用hazel
-	links{
+
+	links
+	{
 		"Hazel"
 	}
 
@@ -85,7 +104,8 @@ project "Sandbox"
 		staticruntime "On"
 		systemversion "latest"
 
-		defines{
+		defines
+		{
 			"HZ_PLATFORM_WINDOWS"
 		}
 
